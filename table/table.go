@@ -18,6 +18,7 @@
 package table
 
 import (
+	"runtime"
 	"slices"
 
 	"github.com/apache/iceberg-go"
@@ -110,6 +111,16 @@ func WithLimit(n int64) ScanOption {
 	}
 }
 
+func WithConcurrency(n int) ScanOption {
+	if n <= 0 {
+		return noopOption
+	}
+
+	return func(scan *Scan) {
+		scan.concurrency = n
+	}
+}
+
 func WithOptions(opts iceberg.Properties) ScanOption {
 	if opts == nil {
 		return noopOption
@@ -128,6 +139,7 @@ func (t Table) Scan(opts ...ScanOption) *Scan {
 		selectedFields: []string{"*"},
 		caseSensitive:  true,
 		limit:          ScanNoLimit,
+		concurrency:    runtime.NumCPU(),
 	}
 
 	for _, opt := range opts {
